@@ -47,13 +47,42 @@ exports.getTransactions = async function (req, res) {
 
 exports.getFinanceCategoriesSummary = async function (req, res) {
     try {
-        const myBalance = 0
+        const transactions = await Transaction.find({});
 
-        const monthlyExpenses = 0
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
 
-        const myInvestments = 0
+        let myBalance = 0
+        let monthlyExpenses = 0
+        let myInvestments = 0
+        let myReserve = 0
 
-        const myReserve = 0
+        for (const transaction of transactions) {
+            const total = transaction.total || 0;
+
+            if (transaction.type === "Income") {
+                myBalance += total;
+            } else if (transaction.type === "Expense" || transaction.type === "Investment" || transaction.type === "Reserve") {
+                myBalance -= total;
+            }
+
+            if (transaction.type === "Investment") {
+                myInvestments += total;
+            }
+
+            if (transaction.type === "Reserve") {
+                myReserve += total;
+            }
+
+            if (
+                transaction.type === "Expense" &&
+                new Date(transaction.date) >= startOfMonth &&
+                new Date(transaction.date) <= endOfMonth
+            ) {
+                monthlyExpenses += total;
+            }
+        }
 
         res.status(200).json({
             myBalance,
