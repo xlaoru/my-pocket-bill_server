@@ -1,21 +1,23 @@
-require('dotenv').config();
+require("dotenv").config();
 
 const express = require("express");
-const cookieParser = require('cookie-parser');
+const cookieParser = require("cookie-parser");
 const mongoose = require("mongoose");
 const cors = require("cors");
 
-const transactionRoutes = require("./routes/transaction-route")
+const transactionRoutes = require("./routes/transaction-route");
 
 const app = express();
 
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: false }));
-app.use(cors({
-    origin: "http://localhost:3000",
-    credentials: true
-}));
+app.use(
+    cors({
+        origin: process.env.CLIENT_URL,
+        credentials: true,
+    })
+);
 
 const PORT = process.env.PORT || 3001;
 
@@ -32,9 +34,7 @@ app.use((error, req, res, next) => {
 });
 
 mongoose
-    .connect(
-        process.env.MONGODB_URI
-    )
+    .connect(process.env.MONGODB_URI)
     .then(() => {
         console.log("Connected to DB");
         app.listen(PORT, () => {
