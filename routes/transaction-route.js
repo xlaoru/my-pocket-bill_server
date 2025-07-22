@@ -5,6 +5,8 @@ const {
     getTransactions,
     getFinanceCategoriesSummary,
     createNewTransaction,
+    editTransaction,
+    deleteTransaction,
 } = require("../controllers/transactions-controller.js");
 
 router.get("/transactions", getTransactions);
@@ -15,5 +17,9 @@ router.get(
 );
 
 router.post("/transactions", createNewTransaction);
+
+router.patch("/transactions/:id", editTransaction);
+
+router.delete("/transactions/:id", deleteTransaction);
 
 module.exports = router;

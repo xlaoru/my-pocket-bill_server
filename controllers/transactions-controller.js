@@ -136,3 +136,47 @@ exports.createNewTransaction = async function (req, res) {
         res.status(500).json({ error: "Server error" });
     }
 };
+
+exports.editTransaction = async function (req, res) {
+    try {
+        const { id } = req.params;
+        const currentTransaction = await Transaction.findByIdAndUpdate(
+            id,
+            req.body,
+            { new: true, runValidators: true }
+        );
+
+        if (!currentTransaction) {
+            return res.status(404).json({
+                message: `Transaction with id ${id} not found`,
+            });
+        }
+
+        res.status(200).json({
+            message: "Transaction updated successfully",
+            transaction: currentTransaction,
+        });
+    } catch (error) {
+        res.status(500).json({ error: "Server error" });
+    }
+};
+
+exports.deleteTransaction = async function (req, res) {
+    try {
+        const { id } = req.params;
+        const currentTransaction = await Transaction.findByIdAndDelete(id);
+
+        if (!currentTransaction) {
+            return res.status(404).json({
+                message: `Transaction with id ${id} not found`,
+            });
+        }
+
+        res.status(200).json({
+            message: "Transaction deleted successfully",
+            transaction: currentTransaction,
+        });
+    } catch (error) {
+        res.status(500).json({ error: "Server error" });
+    }
+};
