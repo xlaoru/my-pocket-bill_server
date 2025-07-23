@@ -51,8 +51,6 @@ exports.getTransactions = async function (req, res) {
 
 exports.getFinanceCategoriesSummary = async function (req, res) {
     try {
-        const transactions = await Transaction.find({});
-
         const now = new Date();
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         const endOfMonth = new Date(
@@ -65,39 +63,55 @@ exports.getFinanceCategoriesSummary = async function (req, res) {
             999
         );
 
+        const result = await Transaction.aggregate([
+            {
+                $facet: {
+                    totals: [
+                        {
+                            $group: {
+                                _id: "$type",
+                                sum: { $sum: "$total" },
+                            },
+                        },
+                    ],
+                    monthlyExpenses: [
+                        {
+                            $match: {
+                                type: "Expense",
+                                date: { $gte: startOfMonth, $lte: endOfMonth },
+                            },
+                        },
+                        {
+                            $group: {
+                                _id: null,
+                                sum: { $sum: "$total" },
+                            },
+                        },
+                    ],
+                },
+            },
+        ]);
+
+        const totals = result[0].totals || [];
+        const monthlyExpenses = result[0].monthlyExpenses[0]?.sum || 0;
+
         let myBalance = 0;
-        let monthlyExpenses = 0;
         let myInvestments = 0;
         let myReserve = 0;
 
-        for (const transaction of transactions) {
-            const total = transaction.total || 0;
-
-            if (transaction.type === "Income") {
-                myBalance += total;
-            } else if (
-                transaction.type === "Expense" ||
-                transaction.type === "Investment" ||
-                transaction.type === "Reserve"
-            ) {
-                myBalance -= total;
+        for (const total of totals) {
+            switch (total._id) {
+                case "Income":
+                    myBalance += total.sum;
+                    break;
+                case "Expense":
+                case "Investment":
+                case "Reserve":
+                    myBalance -= total.sum;
+                    break;
             }
-
-            if (transaction.type === "Investment") {
-                myInvestments += total;
-            }
-
-            if (transaction.type === "Reserve") {
-                myReserve += total;
-            }
-
-            if (
-                transaction.type === "Expense" &&
-                new Date(transaction.date) >= startOfMonth &&
-                new Date(transaction.date) <= endOfMonth
-            ) {
-                monthlyExpenses += total;
-            }
+            if (total._id === "Investment") myInvestments = total.sum;
+            if (total._id === "Reserve") myReserve = total.sum;
         }
 
         res.status(200).json({
