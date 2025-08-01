@@ -6,12 +6,9 @@ exports.getTransactions = async function (req, res) {
     const startDate = req.query.startDate;
     const endDate = req.query.endDate;
     const type = req.query.type;
+    const search = req.query.search;
 
     const filter = {};
-
-    if (type) {
-        filter.type = type;
-    }
 
     if (startDate || endDate) {
         filter.date = {};
@@ -27,6 +24,14 @@ exports.getTransactions = async function (req, res) {
                 new Date(endDate).setHours(23, 59, 59, 999)
             );
         }
+    }
+
+    if (type) {
+        filter.type = type;
+    }
+
+    if (search) {
+        filter.title = { $regex: search, $options: "i" };
     }
 
     try {
